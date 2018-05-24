@@ -10,11 +10,13 @@
 
 (def conversions {:name identity :glitter-index str->int})
 
-(def validates {:name #((true)) :glitter-index #((true))})
+(def validations {:name string? :glitter-index string?})
 
 (defn vali
-  [key value]
-  ((get validates key) value))
+  [validation-map key value]
+  (if (contains? validation-map key)
+    ((get validation-map key) value)
+    false))
 
 (defn convert
   [vamp-key value]
@@ -43,10 +45,39 @@
       '()
       (filter #(>= (:glitter-index %) minimum-glitter) records)))
 
+(defn vali-all-present
+  [validation-map record]
+  (reduce-kv (fn [result key value]
+               (and result (contains? record key)))
+             true
+             validation-map))
+
+(defn vali-only
+  [validation-map record]
+  (reduce-kv (fn [result key value]
+      (and result (vali validation-map key value)))
+      true
+      record))
+
 (defn validate
-  [key-to-validate record]
-  (reduce )
-)
+  [validation-map record]
+  (and
+    (vali-all-present validation-map record)
+    (vali-only validation-map record)))
+
+(defn convert-suspect
+  [new-suspect]
+  (reduce-kv (fn [mapped-suspect key value]
+        (assoc mapped-suspect key (convert key value)))
+        {}
+        new-suspect))
+
+(defn append
+  [suspect-list new-suspect]
+  (if (validate validations new-suspect )
+    (conj suspect-list (convert-suspect new-suspect))
+    suspect-list)
+  )
 
 (defn -main
   "I don't do a whole lot ... yet."
